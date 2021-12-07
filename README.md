@@ -1,1 +1,1 @@
-Curated list of math and data science files
+Curated list of math, statistics and data science files
