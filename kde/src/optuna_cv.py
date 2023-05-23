@@ -56,7 +56,6 @@ def estimate_kde(x1d, return_study=False):
 
 def plot_kde(kde, linspace, x=None):
     # score_samples returns the log of the probability density
-    linspace = np.linspace(-4, 8, 1000)
     logprob = kde.score_samples(linspace[:, None])
 
     plt.fill_between(linspace, np.exp(logprob), alpha=0.5)
