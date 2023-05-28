@@ -5,6 +5,7 @@
 # file to edit: research/optuna_cv.ipynb
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 from functools import partial
 
 def _objective_kde_best_bw(trial, x1d=None):
@@ -54,7 +55,16 @@ def estimate_kde(x1d, return_study=False):
     else:
         return kde
 
-def plot_kde(kde, linspace, x=None):
+def get_linspace_from_kde(kde):
+    arr = np.asarray(kde.tree_.node_bounds).ravel()
+    N = 1000 # arr.shape[0]
+    margin = (arr.max()-arr.min()) * 0.10
+    return np.linspace(arr.min() - margin, arr.max() + margin, N)
+
+def plot_kde(kde, linspace=None, x=None):
+    if linspace == None:
+        linspace = get_linspace_from_kde(kde)
+
     # score_samples returns the log of the probability density
     logprob = kde.score_samples(linspace[:, None])
 
@@ -63,17 +73,21 @@ def plot_kde(kde, linspace, x=None):
         plt.plot(x, np.full_like(x, -0.01), '|k', markeredgewidth=1)
     # plt.ylim(-0.02, 0.4)
 
-def cdf_from_kde(kde, linspace):
+def cdf_from_kde(kde, linspace=None):
+    if linspace == None:
+        linspace = get_linspace_from_kde(kde)
     logprob = kde.score_samples(linspace[:, None])
     cdf_raw=np.exp(logprob).cumsum()
     cdf=cdf_raw/cdf_raw[-1] #normalize
 
-    return cdf
+    return pd.Series(index=linspace, data=cdf, name='cdf')
 
-def pval_from_cdf(x, cdf, linspace):
+def pval_from_cdf(x, cdf):
+    linspace = cdf.index
+    values = cdf.values
     if x >= linspace[-1]:
         # higher value that we ever seen
         return 1.0
     else:
         idx=np.argmax(linspace>x)
-        return cdf[idx]
+        return values[idx]
